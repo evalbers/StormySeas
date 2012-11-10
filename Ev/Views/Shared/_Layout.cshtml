@@ -1,0 +1,250 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Message</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+
+    @Scripts.Render("~/bundles/jquery")
+    @RenderSection("scripts", required: false)
+    <script>
+        var console = {
+            log: function() {
+            }
+        };
+
+        var dirs = {
+            up: 0,
+            down: 1,
+            left: 2,
+            right: 3
+        };
+
+        var vessels = {
+            ship: function () {
+                return vessel(2, 9, 0, 9, 3, 9, 1, 9);
+            },
+            self: 1
+        };
+        
+        function vessel(x, y) {
+            return vessel(x, y, x, y, x, y, x, y);
+        }
+        function vessel(upX, upY, downX, downY, leftX, leftY, rightX, rightY) {
+
+            var v = {};
+            v.dirs = [];
+            v.dirs.push({ x: upX, y: upY });
+            v.dirs.push({ x: downX, y: downY });
+            v.dirs.push({ x: leftX, y: leftY });
+            v.dirs.push({ x: rightX, y: rightY });
+
+            return v;
+        }
+
+        var tiles = [];
+        var cols = 32;
+        var rows = 16;
+        var dim = 32;
+        
+        function initOverworld() {
+            var t = 0;
+            for (var y = 0; y < rows; y++) {
+                for (var x = 0; x < cols; x++) {
+                    $("#map").append("<div id='map-" + t + "' class='t 20'>" + t++ + "</div>");
+                }
+                $("#map").append("<div class='clear'></div>");
+            }
+        }
+
+        $(document).ready(function () {
+            for (var i = 0; i < 600; i++) {
+                $("." + i).css("font-size", i + "px");
+            }
+
+            initOverworld();
+            var divs = $(".t");
+            divs.width(dim - 2);
+            divs.height(dim - 2);
+            divs.html("");
+
+            var y = 0;
+            var x = 0;
+            divs.each(function (idiv) {
+                if (idiv === 0 || (idiv % cols) === 0) {
+                    x = 0;
+                } else {
+                    ++x;
+                }
+                if (idiv >= cols && (idiv % cols) === 0) {
+                    ++y;
+                }
+                tiles.push({
+                    x: x,
+                    y: y,
+                    blt: $(this)
+                });
+                console.log("x: " + x + ", y: " + y);
+            });
+
+            player(vessels.ship(), dirs.down);
+            var yo = 0;
+            setInterval(function () {
+                
+                if (++yo === 1) {
+
+                    yo = -1;
+                    overworld_blt_back();
+                } else {
+                    overworld_blt_front();
+                }
+                
+                player(vessels.ship(), curDir);
+
+            }, 330);
+
+            
+        });
+
+        function overworld_blt_back() {
+            var t = 0;
+            for (var y = 0; y < rows; y++) {
+                for (var x = 0; x < cols; x++) {
+                    switch (t) {
+                    case 0:
+                        blt(x, y, 1, 0);
+                        ++t;
+                        break;
+                    case 1:
+                    case 2:
+                        blt(x, y, 2, 0);
+                        ++t;
+                        break;
+                    default:
+                        blt(x, y, 1, 0);
+                        t = 1;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        function overworld_blt_front() {
+            var t = 0;
+            for (var y = 0; y < rows; y++) {
+                for (var x = 0; x < cols; x++) {
+                    switch (t) {
+                    case 0:
+                        blt(x, y, 1, 0);
+                        ++t;
+                        break;
+                    case 1:
+                    case 2:
+                        blt(x, y, 2, 0);
+                        ++t;
+                        break;
+                    default:
+                        blt(x, y, 3, 0);
+                        t = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        var playerLoc = { x: 15, y: 7 };
+        function player(vessel, dir) {
+            var vdir = vessel.dirs[dir];
+            blt(playerLoc.x, playerLoc.y, vdir.x, vdir.y);
+        }
+
+        function blt(x, y, bltX, bltY) {
+            console.log("blt(" + x + "," + y + "," + bltX + "," + bltY + ")");
+            for (var i = 0; i < tiles.length; i++) {
+                var tile = tiles[i];
+                if (tile.x === x && tile.y === y) {
+                    tile.blt.css("background-position", "-" + (bltX * dim) + "px -" + (bltY * dim) + "px");
+                    break;
+                }
+            }
+        }
+        
+        $(document).keydown(function (e) {
+            /*switch (e.keyCode) {
+                case 37: // left
+                    player(vessels.ship(), dirs.left);
+                    break;
+                case 38: // up
+                    player(vessels.ship(), dirs.up);
+                    break;
+                case 39: // right
+                    player(vessels.ship(), dirs.right);
+                    break;
+                case 40: // down
+                    player(vessels.ship(), dirs.down);
+                    break;
+
+                default:
+                    break;
+            }*/
+
+        });
+
+        var curDir = dirs.down;
+        $(document).keyup(function (e) {
+            switch (e.keyCode) {
+            case 37: // left
+                --playerLoc.x;
+                curDir = dirs.left;
+                break;
+            case 38: // up
+                --playerLoc.y;
+                curDir = dirs.up;
+                break;
+            case 39: // right
+                ++playerLoc.x;
+                curDir = dirs.right;
+                break;
+            case 40: // down
+                ++playerLoc.y;
+                curDir = dirs.down;
+                break;
+
+            default:
+                break;
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .t {
+            border: dotted 1px transparent;
+            color: red;
+            float: left;
+            background-image: url("/images/tiles.png");
+            background-repeat: no-repeat;
+        }
+
+        body {
+            background-color: black;
+        }
+
+        #map { margin: 5 0px;}
+
+        .clear {
+            clear: both;
+        }
+    </style>
+</head>
+    <body>
+        <div id="map">
+            
+        </div>
+        @RenderBody()
+    </body>
+</html>
